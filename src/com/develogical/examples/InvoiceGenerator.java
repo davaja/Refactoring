@@ -15,28 +15,40 @@ public class InvoiceGenerator {
     public String getInvoiceText() {
         StringBuilder text = new StringBuilder();
         BigDecimal total = new BigDecimal(0);
+
         for (LineItem item : items) {
             if (country == null) {
-                text.append(item.name).append(" ").append(item.price).append('\n');
-                total = total.add(item.price);
+                total = itemDetailsAndTotal(text, total, item);
             } else if (country == UK) {
-                text.append(item.name).append(" ").append(item.price).append('\n');
-                total = total.add(item.price);
-                BigDecimal vat = item.price.multiply(new BigDecimal(0.2));
-                text.append("VAT").append(" ").append(vat.setScale(2, RoundingMode.HALF_EVEN).toPlainString()).append('\n');
-                total = total.add(vat);
+                double vatRate = 0.2;
+                total = itemPriceAndVatDetails(text, total, item, vatRate);
             } else if (country == FRANCE) {
-                BigDecimal vat = item.price.multiply(new BigDecimal(0.196));
-                text.append(item.name).append(" ").append(item.price).append('\n');
-                text.append("VAT").append(" ").append(vat.setScale(2, RoundingMode.HALF_EVEN).toPlainString()).append('\n');
-                total = total.add(item.price);
-                total = total.add(vat);
+                double vatRate = 0.196;
+                total = itemPriceAndVatDetails(text, total, item, vatRate);
             }
         }
         text.append("Total").append(" ").append(total.setScale(2, RoundingMode.HALF_EVEN).toPlainString());
         return text.toString();
     }
-    
+
+    private BigDecimal itemPriceAndVatDetails(StringBuilder text, BigDecimal total, LineItem item, double vatRate) {
+        total = itemDetailsAndTotal(text, total, item);
+        BigDecimal vat = item.price.multiply(new BigDecimal(vatRate));
+        text.append("VAT").append(" ").append(vat.setScale(2, RoundingMode.HALF_EVEN).toPlainString()).append('\n');
+        total = total.add(vat);
+        return total;
+    }
+
+    private BigDecimal itemDetailsAndTotal(StringBuilder text, BigDecimal total, LineItem item) {
+        formatItemDetails(text, item);
+        total = total.add(item.price);
+        return total;
+    }
+
+    private void formatItemDetails(StringBuilder text, LineItem item) {
+        text.append(item.name).append(" ").append(item.price).append('\n');
+    }
+
     public void setCountry(int country) {
         this.country = country;
     }
